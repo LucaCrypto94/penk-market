@@ -1,0 +1,19 @@
+# Copy this file to .env and fill in your actual values
+
+# Ethereum Sepolia Testnet RPC URL
+# Get this from providers like:
+# - Alchemy: https://www.alchemy.com/
+# - Infura: https://infura.io/
+# - QuickNode: https://www.quicknode.com/
+# - Or use public RPC: https://rpc.sepolia.org/
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID
+
+# Your private key (without 0x prefix)
+# WARNING: Never commit your actual private key to version control
+# WARNING: This is for development only - use a test wallet
+PRIVATE_KEY=your_private_key_here_without_0x_prefix
+
+# Example:
+# SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/abc123def456ghi789
+# PRIVATE_KEY=1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+# ETHERSCAN_API_KEY=your_etherscan_api_key_here 

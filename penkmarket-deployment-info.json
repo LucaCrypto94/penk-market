@@ -1,0 +1,13 @@
+{
+  "contractName": "PenkMarketL2",
+  "contractAddress": "0x8abF20707B652244d89375eed3f36F36bf193339",
+  "deploymentBlock": 78373,
+  "deploymentTxHash": "0x240cb5e99762b1d1857dbdf9bc99ba6825b066b876adafd6d0cd7fd7729d8e81",
+  "deployer": "0x62942BbBb86482bFA0C064d0262E23Ca04ea99C5",
+  "verifierAddress": "0x73aF5be3DB46Ce3b7c50Fd833B9C60180f339449",
+  "quoterAddress": "0xd647b2D80b48e93613Aa6982b85f8909578b4829",
+  "swapRouterAddress": "0x150c3F0f16C3D9EB34351d7af9c961FeDc97A0fb",
+  "wpepuAddress": "0xF9Cf4A16d26979b929Be7176bAc4e7084975FCB8",
+  "network": "Unknown",
+  "deployedAt": "2025-08-26T21:24:33.985Z"
+}
