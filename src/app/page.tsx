@@ -120,7 +120,7 @@ export default function PenkMarket() {
             <a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium">
               Market
             </a>
-            <a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium">
+            <a href="/portfolio" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium">
               Portfolio
             </a>
             <a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium">
@@ -203,7 +203,7 @@ export default function PenkMarket() {
               <a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium px-4 py-2">
                 Market
               </a>
-              <a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium px-4 py-2">
+              <a href="/portfolio" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium px-4 py-2">
                 Portfolio
               </a>
               <a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors font-medium px-4 py-2">
