@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ArrowUpDown, Wallet, Menu, X } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useBalance, useDisconnect } from 'wagmi';
+import { useAccount, useBalance, useDisconnect, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther, parseUnits, formatEther, formatUnits } from 'viem';
 
 export default function PenkMarket() {
   const [fromAmount, setFromAmount] = useState('');
@@ -20,6 +21,9 @@ export default function PenkMarket() {
   const [isLoading, setIsLoading] = useState(false);
   const [penkBonus, setPenkBonus] = useState<number>(0);
   const [totalUsdValue, setTotalUsdValue] = useState<number>(0);
+  const [transactionHash, setTransactionHash] = useState<string>('');
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [txStatus, setTxStatus] = useState<string>('');
 
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -39,6 +43,31 @@ export default function PenkMarket() {
     address,
     token: process.env.NEXT_PUBLIC_PEPU_ADDRESS as `0x${string}`,
   });
+
+  // Contract addresses
+  const L1_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_L1_CONTRACT_ADDRESS as `0x${string}`;
+  const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
+  const PEPU_ADDRESS = process.env.NEXT_PUBLIC_PEPU_ADDRESS as `0x${string}`;
+
+  // Contract write functions
+  const { writeContract: buyWithETH, data: ethTxData, isPending: isEthPending } = useWriteContract();
+
+  const { writeContract: buyWithUSDC, data: usdcTxData, isPending: isUsdcPending } = useWriteContract();
+
+  const { writeContract: buyWithPEPU, data: pepuTxData, isPending: isPepuPending } = useWriteContract();
+
+  // USDC approval
+  const { writeContract: approveUSDC, data: usdcApprovalData, isPending: isUsdcApprovalPending } = useWriteContract();
+
+  // PEPU approval
+  const { writeContract: approvePEPU, data: pepuApprovalData, isPending: isPepuApprovalPending } = useWriteContract();
+
+  // Wait for transactions
+  const { isLoading: isEthTxLoading } = useWaitForTransactionReceipt({ hash: ethTxData });
+  const { isLoading: isUsdcTxLoading } = useWaitForTransactionReceipt({ hash: usdcTxData });
+  const { isLoading: isPepuTxLoading } = useWaitForTransactionReceipt({ hash: pepuTxData });
+  const { isLoading: isUsdcApprovalLoading } = useWaitForTransactionReceipt({ hash: usdcApprovalData });
+  const { isLoading: isPepuApprovalLoading } = useWaitForTransactionReceipt({ hash: pepuApprovalData });
 
 
 
@@ -181,6 +210,127 @@ export default function PenkMarket() {
       setEquivalentAmount('0.0');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const executeTransaction = async () => {
+    if (!fromAmount || parseFloat(fromAmount) <= 0 || !equivalentAmount) return;
+    
+    setIsExecuting(true);
+    setTxStatus('Preparing transaction...');
+    
+    try {
+      const amount = parseFloat(fromAmount);
+      const providedString = `Buying ${toToken} with ${fromToken}`;
+      
+      if (fromToken === 'ETH') {
+        // Buy with ETH
+        setTxStatus('Executing ETH transaction...');
+        await buyWithETH({
+          address: L1_CONTRACT_ADDRESS,
+          abi: [
+            {
+              "inputs": [{"internalType": "string", "name": "providedString", "type": "string"}],
+              "name": "buy",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function"
+            }
+          ],
+          functionName: 'buy',
+          args: [providedString],
+          value: parseEther(fromAmount)
+        });
+        setTxStatus('ETH transaction submitted!');
+        
+      } else if (fromToken === 'USDC') {
+        // Buy with USDC
+        setTxStatus('Approving USDC...');
+        await approveUSDC({
+          address: USDC_ADDRESS,
+          abi: [
+            {
+              "inputs": [
+                {"internalType": "address", "name": "spender", "type": "address"},
+                {"internalType": "uint256", "name": "amount", "type": "uint256"}
+              ],
+              "name": "approve",
+              "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ],
+          functionName: 'approve',
+          args: [L1_CONTRACT_ADDRESS, parseUnits(fromAmount, 6)]
+        });
+        
+        setTxStatus('USDC approved, executing transaction...');
+        await buyWithUSDC({
+          address: L1_CONTRACT_ADDRESS,
+          abi: [
+            {
+              "inputs": [
+                {"internalType": "string", "name": "providedString", "type": "string"},
+                {"internalType": "uint256", "name": "amount", "type": "uint256"}
+              ],
+              "name": "buyWithUSDC",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ],
+          functionName: 'buyWithUSDC',
+          args: [providedString, parseUnits(fromAmount, 6)]
+        });
+        setTxStatus('USDC transaction submitted!');
+        
+      } else if (fromToken === 'PEPU') {
+        // Buy with PEPU
+        setTxStatus('Approving PEPU...');
+        await approvePEPU({
+          address: PEPU_ADDRESS,
+          abi: [
+            {
+              "inputs": [
+                {"internalType": "address", "name": "spender", "type": "address"},
+                {"internalType": "uint256", "name": "amount", "type": "uint256"}
+              ],
+              "name": "approve",
+              "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ],
+          functionName: 'approve',
+          args: [L1_CONTRACT_ADDRESS, parseUnits(fromAmount, 18)]
+        });
+        
+        setTxStatus('PEPU approved, executing transaction...');
+        await buyWithPEPU({
+          address: L1_CONTRACT_ADDRESS,
+          abi: [
+            {
+              "inputs": [
+                {"internalType": "string", "name": "providedString", "type": "string"},
+                {"internalType": "uint256", "name": "amount", "type": "uint256"}
+              ],
+              "name": "buyWithPEPU",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ],
+          functionName: 'buyWithPEPU',
+          args: [providedString, parseUnits(fromAmount, 18)]
+        });
+        setTxStatus('PEPU transaction submitted!');
+      }
+      
+    } catch (error) {
+      console.error('Transaction error:', error);
+      setTxStatus('Transaction failed. Please try again.');
+    } finally {
+      setIsExecuting(false);
     }
   };
 
@@ -454,27 +604,61 @@ export default function PenkMarket() {
                     </div>
                   </div>
                   
-                                     {/* Quote Details */}
-                   {equivalentAmount && !isLoading && (
-                     <div className="bg-[#0a0a0a] border border-gray-600 rounded-lg p-3 space-y-2">
-                       <div className="flex justify-between text-sm">
-                         <span className="text-gray-400">You Pay:</span>
-                         <span className="text-white">{fromAmount} {fromToken}</span>
-                       </div>
-                       <div className="flex justify-between text-sm">
-                         <span className="text-gray-400">You Receive:</span>
-                         <span className="text-white">{equivalentAmount} {toToken}</span>
-                       </div>
-                       <div className="flex justify-between text-sm">
-                         <span className="text-gray-400">PenkBonus:</span>
-                         <span className="text-yellow-400">+${penkBonus.toFixed(2)} (2%)</span>
-                       </div>
-                       <div className="flex justify-between text-sm">
-                         <span className="text-gray-400">Total Value:</span>
-                         <span className="text-white">≈ ${totalUsdValue.toFixed(2)}</span>
-                       </div>
-                     </div>
-                   )}
+                                                         {/* Quote Details */}
+                    {equivalentAmount && !isLoading && (
+                      <div className="bg-[#0a0a0a] border border-gray-600 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">You Pay:</span>
+                          <span className="text-white">{fromAmount} {fromToken}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">You Receive:</span>
+                          <span className="text-white">{equivalentAmount} {toToken}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">From Token Price:</span>
+                          <span className="text-white">${usdValue > 0 ? (usdValue / parseFloat(fromAmount)).toFixed(6) : '0.00'} per {fromToken}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">PenkBonus:</span>
+                          <span className="text-yellow-400">+${penkBonus.toFixed(2)} (2%)</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">Total Value:</span>
+                          <span className="text-white">≈ ${totalUsdValue.toFixed(2)}</span>
+                        </div>
+                        
+                        {/* Transaction Status */}
+                        {txStatus && (
+                          <div className="mt-3 p-2 bg-blue-900/20 border border-blue-500/50 rounded text-xs text-blue-300">
+                            {txStatus}
+                          </div>
+                        )}
+                        
+                        {/* Execute Button */}
+                        <button
+                          onClick={executeTransaction}
+                          disabled={isExecuting || isEthPending || isUsdcPending || isPepuPending || isUsdcApprovalPending || isPepuApprovalPending}
+                          className={`w-full mt-3 font-bold py-2 rounded-lg transition-colors ${
+                            isExecuting || isEthPending || isUsdcPending || isPepuPending || isUsdcApprovalPending || isPepuApprovalPending
+                              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          }`}
+                        >
+                          {isExecuting || isEthPending || isUsdcPending || isPepuPending || isUsdcApprovalPending || isPepuApprovalPending ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span>Executing...</span>
+                            </div>
+                          ) : (
+                            'Execute Transaction'
+                          )}
+                        </button>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
