@@ -13,94 +13,163 @@ export default function PenkMarket() {
   const [toDropdownOpen, setToDropdownOpen] = useState(false);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [fromTokens, setFromTokens] = useState(['ETH', 'USDC', 'PEPU']); // Default fallback
+  const [toTokens, setToTokens] = useState(['SPRING', 'PENK']); // Default fallback
+  const [usdValue, setUsdValue] = useState<number>(0);
+  const [equivalentAmount, setEquivalentAmount] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const fromDropdownRef = useRef<HTMLDivElement>(null);
-  const toDropdownRef = useRef<HTMLDivElement>(null);
-  const walletDropdownRef = useRef<HTMLDivElement>(null);
-
-  const fromTokens = ['ETH', 'USDC', 'PEPU'];
-  const toTokens = ['SPRING', 'PENK'];
-
-  // Wagmi hooks
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+
+  // ETH balance
   const { data: ethBalance } = useBalance({
     address,
   });
-  const { disconnect } = useDisconnect();
 
-  // Close dropdowns when clicking outside
+  // USDC and PEPU balances
+  const { data: usdcBalance } = useBalance({
+    address,
+    token: process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
+  });
+  
+  const { data: pepuBalance } = useBalance({
+    address,
+    token: process.env.NEXT_PUBLIC_PEPU_ADDRESS as `0x${string}`,
+  });
+
+
+
+  // Fetch available tokens
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Temporarily disabled to fix dropdown functionality
-      // if (fromDropdownRef.current && !fromDropdownRef.current.contains(event.target as Node)) {
-      //   setFromDropdownOpen(false);
-      // }
-      // if (toDropdownRef.current && !toDropdownRef.current.contains(event.target as Node)) {
-      //   setToDropdownOpen(false);
-      // }
-      if (walletDropdownRef.current && !walletDropdownRef.current.contains(event.target as Node)) {
-        setWalletDropdownOpen(false);
+    const fetchTokens = async () => {
+      try {
+        const response = await fetch('/api/tokens');
+        const data = await response.json();
+        if (data.success) {
+          if (data.fromTokens) {
+            setFromTokens(data.fromTokens);
+            if (data.fromTokens.length > 0) {
+              setFromToken(data.fromTokens[0]);
+            }
+          }
+          if (data.toTokens) {
+            setToTokens(data.toTokens);
+            if (data.toTokens.length > 0) {
+              setToToken(data.toTokens[0]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch tokens:', error);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    fetchTokens();
   }, []);
 
   const handleFromTokenSelect = (token: string) => {
-    console.log('Selecting from token:', token);
     setFromToken(token);
     setFromDropdownOpen(false);
+    // Reset amount when changing token
+    setFromAmount('');
+    setUsdValue(0);
+    setEquivalentAmount('');
   };
 
   const handleToTokenSelect = (token: string) => {
-    console.log('Selecting to token:', token);
     setToToken(token);
     setToDropdownOpen(false);
+    // Reset equivalent amount when changing target token
+    setEquivalentAmount('');
   };
 
   const toggleFromDropdown = () => {
-    console.log('Toggling from dropdown, current state:', fromDropdownOpen);
-    const newState = !fromDropdownOpen;
-    console.log('Setting from dropdown to:', newState);
-    setFromDropdownOpen(newState);
+    setFromDropdownOpen(!fromDropdownOpen);
+    setToDropdownOpen(false);
   };
 
   const toggleToDropdown = () => {
-    console.log('Toggling to dropdown, current state:', toDropdownOpen);
-    const newState = !toDropdownOpen;
-    console.log('Setting to dropdown to:', newState);
-    setToDropdownOpen(newState);
+    setToDropdownOpen(!toDropdownOpen);
+    setFromDropdownOpen(false);
   };
 
-  const toggleWalletDropdown = () => {
-    setWalletDropdownOpen(!walletDropdownOpen);
-  };
-
-  // Format balance for display
-  const formatBalance = (balance: any, token: string) => {
-    if (!balance || !isConnected) return `0.00 ${token}`;
+  const getCurrentBalance = () => {
+    if (!isConnected) return '0';
     
-    if (token === 'ETH') {
-      return `${parseFloat(balance.formatted).toFixed(4)} ${token}`;
+    if (fromToken === 'ETH') {
+      return ethBalance ? parseFloat(ethBalance.formatted).toFixed(4) : '0';
+    } else if (fromToken === 'USDC') {
+      return usdcBalance ? parseFloat(usdcBalance.formatted).toFixed(2) : '0';
+    } else if (fromToken === 'PEPU') {
+      return pepuBalance ? parseFloat(pepuBalance.formatted).toFixed(2) : '0';
     }
-    
-    // Mock balances for other tokens
-    const mockBalances: { [key: string]: string } = {
-      'USDC': '1250.00',
-      'PEPU': '121500.00',
-      'SPRING': '0.00',
-      'PENK': '0.00'
-    };
-    
-    return `${mockBalances[token] || '0.00'} ${token}`;
+    // For any other tokens, return 0 for now
+    return '0';
   };
 
-  // Format address for display
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const handleAmountChange = (value: string) => {
+    const numValue = parseFloat(value);
+    const currentBalance = parseFloat(getCurrentBalance());
+    
+    if (numValue > currentBalance) {
+      // Cap at max balance
+      setFromAmount(currentBalance.toString());
+    } else {
+      setFromAmount(value);
+    }
+  };
+
+  const getMaxAmount = () => {
+    const balance = getCurrentBalance();
+    setFromAmount(balance);
+  };
+
+  const handleGetQuote = async () => {
+    if (!fromAmount || parseFloat(fromAmount) <= 0) return;
+    
+    setIsLoading(true);
+    
+    try {
+      console.log('Getting quote for:', { fromToken, fromAmount, toToken });
+      
+      // Call the quote API
+      const response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fromToken,
+          fromAmount,
+          toToken
+        })
+      });
+
+      const data = await response.json();
+      console.log('Quote API response:', data);
+      
+      if (data.success) {
+        // Update the TO field with the quote result
+        const tokensReceived = data.data.tokensReceived;
+        const inputUsdValue = data.data.inputUsdValue;
+        console.log('Setting equivalent amount to:', tokensReceived);
+        console.log('Setting USD value to:', inputUsdValue);
+        setEquivalentAmount(tokensReceived.toString());
+        setUsdValue(inputUsdValue);
+      } else {
+        console.error('Quote API error:', data.error);
+        // Just update with 0 if there's an error
+        setEquivalentAmount('0.0');
+      }
+      
+    } catch (error) {
+      console.error('Error getting quote:', error);
+      // Just update with 0 if there's an error
+      setEquivalentAmount('0.0');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -163,13 +232,13 @@ export default function PenkMarket() {
                 }}
               </ConnectButton.Custom>
             ) : (
-              <div className="relative" ref={walletDropdownRef}>
+              <div className="relative">
                 <button
-                  onClick={toggleWalletDropdown}
+                  onClick={() => setWalletDropdownOpen(!walletDropdownOpen)}
                   className="bg-yellow-400 text-black font-bold px-4 py-2 rounded-lg hover:bg-yellow-500 transition-colors shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
                 >
                   <Wallet className="w-4 h-4" />
-                  {formatAddress(address!)}
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
                   <ChevronDown className={`w-3 h-3 transition-transform ${walletDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
@@ -266,11 +335,6 @@ export default function PenkMarket() {
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-2">Penk Market</h1>
             <p className="text-gray-400 text-sm">Buy coins on Sepolia Testnet</p>
-            {/* Debug info - hidden on mobile */}
-            <div className="hidden sm:block text-xs text-gray-500 mt-2">
-              From dropdown: {fromDropdownOpen ? 'OPEN' : 'CLOSED'} | 
-              To dropdown: {toDropdownOpen ? 'OPEN' : 'CLOSED'}
-            </div>
           </div>
 
           {/* Main Trading Card */}
@@ -283,30 +347,26 @@ export default function PenkMarket() {
                   <input
                     type="number"
                     value={fromAmount}
-                    onChange={(e) => setFromAmount(e.target.value)}
+                    onChange={(e) => handleAmountChange(e.target.value)}
                     placeholder="0.0"
-                    className="bg-transparent text-white text-xl sm:text-2xl outline-none w-full"
+                    disabled={!isConnected}
+                    className="bg-transparent text-xl sm:text-2xl outline-none w-full text-white"
                   />
-                  <div className="relative" ref={fromDropdownRef}>
+                  <div className="relative">
                     <button 
                       onClick={toggleFromDropdown}
-                      className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 bg-[#0a0a0a] px-3 py-2 rounded-lg border border-gray-600 hover:border-yellow-400 transition-colors"
+                      disabled={!isConnected}
+                      className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-3 py-2 rounded-lg border transition-colors bg-[#0a0a0a] border-gray-600 hover:border-yellow-400"
                     >
-                      <span className="text-white font-medium">{fromToken}</span>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${fromDropdownOpen ? 'rotate-180' : ''}`} />
+                      <span className="text-white font-medium">
+                        {fromToken}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     </button>
                     
                     {/* Dropdown Menu */}
-                    {fromDropdownOpen && (
+                    {fromDropdownOpen && isConnected && (
                       <div className="absolute top-full left-0 mt-2 bg-[#0a0a0a] border-2 border-yellow-400 rounded-lg shadow-xl z-50 min-w-[120px] w-full sm:w-auto">
-                        <div className="p-2 border-b border-gray-600">
-                          <button 
-                            onClick={() => setFromDropdownOpen(false)}
-                            className="text-yellow-400 text-sm hover:text-yellow-300"
-                          >
-                            ✕ Close
-                          </button>
-                        </div>
                         {fromTokens.map((token) => (
                           <button
                             key={token}
@@ -323,8 +383,14 @@ export default function PenkMarket() {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
-                  Balance: {formatBalance(ethBalance, fromToken)}
+                  Balance: {getCurrentBalance()} {fromToken}
                 </div>
+                <button
+                  onClick={getMaxAmount}
+                  className="text-xs bg-yellow-400 text-black px-2 py-1 rounded hover:bg-yellow-500 transition-colors mt-1"
+                >
+                  MAX
+                </button>
               </div>
             </div>
 
@@ -340,29 +406,29 @@ export default function PenkMarket() {
               <div className="text-sm text-gray-400 mb-2">To</div>
               <div className="bg-black border border-gray-700 rounded-lg p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="text-xl sm:text-2xl text-white">
-                    {fromAmount ? (parseFloat(fromAmount) * 121500).toLocaleString() : '0.0'}
+                                                  <div className="text-xl sm:text-2xl text-white">
+                  {isLoading ? 'Calculating...' : (equivalentAmount ? equivalentAmount : '0.0')}
+                </div>
+                {equivalentAmount && !isLoading && (
+                  <div className="text-xs text-gray-500">
+                    ≈ ${usdValue.toFixed(2)}
                   </div>
-                  <div className="relative" ref={toDropdownRef}>
+                )}
+                <div className="relative">
                     <button 
                       onClick={toggleToDropdown}
-                      className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 bg-[#0a0a0a] px-3 py-2 rounded-lg border border-gray-600 hover:border-yellow-400 transition-colors"
+                      disabled={!isConnected}
+                      className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-3 py-2 rounded-lg border transition-colors bg-[#0a0a0a] border-gray-600 hover:border-yellow-400"
                     >
-                      <span className="text-white font-medium">{toToken}</span>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${toDropdownOpen ? 'rotate-180' : ''}`} />
+                      <span className="text-white font-medium">
+                        {toToken}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     </button>
                     
                     {/* Dropdown Menu */}
-                    {toDropdownOpen && (
+                    {toDropdownOpen && isConnected && (
                       <div className="absolute top-full left-0 mt-2 bg-[#0a0a0a] border-2 border-yellow-400 rounded-lg shadow-xl z-50 min-w-[120px] w-full sm:w-auto">
-                        <div className="p-2 border-b border-gray-600">
-                          <button 
-                            onClick={() => setToDropdownOpen(false)}
-                            className="text-yellow-400 text-sm hover:text-yellow-300"
-                          >
-                            ✕ Close
-                          </button>
-                        </div>
                         {toTokens.map((token) => (
                           <button
                             key={token}
@@ -378,24 +444,19 @@ export default function PenkMarket() {
                     )}
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  Balance: {formatBalance(null, toToken)}
-                </div>
               </div>
             </div>
 
-            {/* Rate Info */}
-            <div className="bg-black border border-gray-700 rounded-lg p-3 mb-6">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Rate</span>
-                <span className="text-white">1 ETH = 121,500 PEPU</span>
+            {/* Instructions */}
+            {isConnected && !equivalentAmount && fromAmount && (
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-400">Click "Get Quote" to see the exchange rate</p>
               </div>
-            </div>
+            )}
 
             {/* Connect/Swap Button */}
             {!isConnected ? (
               <div className="text-center">
-                <p className="text-gray-400 text-sm mb-3">Connect your wallet to start trading</p>
                 <ConnectButton.Custom>
                   {({
                     account,
@@ -408,7 +469,7 @@ export default function PenkMarket() {
                     return (
                       <button
                         onClick={openConnectModal}
-                        className="w-full bg-yellow-400 text-black font-bold py-3 rounded-lg hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-yellow-400 text-black font-bold px-4 py-3 rounded-lg hover:bg-yellow-500 transition-colors shadow-lg flex items-center justify-center gap-2"
                       >
                         <Wallet className="w-5 h-5" />
                         Connect Wallet
@@ -419,23 +480,27 @@ export default function PenkMarket() {
               </div>
             ) : (
               <button
-                className="w-full bg-yellow-400 text-black font-bold py-3 rounded-lg hover:bg-yellow-500 transition-colors"
+                onClick={handleGetQuote}
+                disabled={!fromAmount || parseFloat(fromAmount) <= 0 || isLoading}
+                className={`w-full font-bold py-3 rounded-lg transition-colors ${
+                  !fromAmount || parseFloat(fromAmount) <= 0 || isLoading
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-yellow-400 text-black hover:bg-yellow-500'
+                }`}
               >
-                Swap
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Getting Quote...</span>
+                  </div>
+                ) : (
+                  'Get Quote'
+                )}
               </button>
             )}
-          </div>
-
-          {/* Simple Stats */}
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 sm:p-4 text-center">
-              <div className="text-yellow-400 font-bold text-sm sm:text-base">$0.008234</div>
-              <div className="text-xs text-gray-400">PEPU Price</div>
-            </div>
-            <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 sm:p-4 text-center">
-              <div className="text-green-400 font-bold text-sm sm:text-base">+12.45%</div>
-              <div className="text-xs text-gray-400">24h Change</div>
-            </div>
           </div>
         </div>
       </div>

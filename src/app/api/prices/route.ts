@@ -1,29 +1,17 @@
 import { NextResponse } from 'next/server';
+import { getAllTokens, Token } from '@/lib/token-utils';
 
 export const dynamic = 'force-dynamic';
 
 const GECKO_TERMINAL_API = 'https://api.geckoterminal.com/api/v2';
 
-// Token addresses and their GeckoTerminal network paths
-const TOKENS = [
-  { 
-    symbol: 'ETH',
-    path: 'networks/eth/tokens/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' // WETH address
-  },
-  { 
-    symbol: 'USDC',
-    path: 'networks/eth/tokens/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-  },
-  { 
-    symbol: 'PEPU',
-    path: 'networks/eth/pools/0xb1b10b05aa043dd8d471d4da999782bc694993e3ecbe8e7319892b261b412ed5' // PEPU/WETH pool
-  }
-];
-
 export async function GET() {
   try {
+    // Get all tokens from the utility function
+    const tokens = getAllTokens();
+    
     const prices = await Promise.all(
-      TOKENS.map(async (token) => {
+      tokens.map(async (token: Token) => {
         try {
           const url = `${GECKO_TERMINAL_API}/${token.path}`;
           console.log(`Fetching ${token.symbol} price from:`, url);
@@ -44,14 +32,17 @@ export async function GET() {
           let change24h: number;
           let rawPrice: string;
           
-          if (token.symbol === 'PEPU') {
-            // Handle PEPU pool data
+          // Determine if this is a pool (PEPU, SPRING, PENK) or token (ETH, USDC)
+          const isPool = token.path.includes('/pools/');
+          
+          if (isPool) {
+            // Handle pool data
             const attributes = data.data.attributes;
             price = parseFloat(attributes.base_token_price_usd);
             change24h = parseFloat(attributes.price_change_percentage?.h24 || '0');
             rawPrice = price.toFixed(8);
           } else {
-            // Handle other tokens (like ETH)
+            // Handle token data
             const attributes = data.data.attributes;
             price = parseFloat(attributes.price_usd);
             change24h = parseFloat(attributes.price_change_percentage?.usd_24h || '0');
@@ -66,7 +57,8 @@ export async function GET() {
             symbol: token.symbol,
             price,
             change24h,
-            rawPrice
+            rawPrice,
+            network: token.path.includes('pepe-unchained') ? 'pepe-unchained' : 'eth'
           };
         } catch (error) {
           console.error(`Error fetching ${token.symbol} price:`, error);
@@ -74,6 +66,7 @@ export async function GET() {
             symbol: token.symbol, 
             price: 0, 
             change24h: 0,
+            network: token.path.includes('pepe-unchained') ? 'pepe-unchained' : 'eth',
             error: error instanceof Error ? error.message : 'Unknown error'
           };
         }

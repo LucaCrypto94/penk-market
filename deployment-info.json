@@ -1,9 +1,0 @@
-{
-  "contractAddress": "0x6BA3253E126863A9e59667EB45A8020234fC58Ff",
-  "deployer": "0x62942BbBb86482bFA0C064d0262E23Ca04ea99C5",
-  "usdcAddress": "0xFCfd48582C45ec6f8daA460B1Db0Bd9102bFFC01",
-  "pepuAddress": "0x76Fd2Cd9dD73b90e377873C3AcB217F39576eCFf",
-  "verifierAddress": "0x73aF5be3DB46Ce3b7c50Fd833B9C60180f339449",
-  "network": "sepolia",
-  "deployedAt": "2025-08-26T00:39:28.994Z"
-}
