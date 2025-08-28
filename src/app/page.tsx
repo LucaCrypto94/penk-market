@@ -18,6 +18,8 @@ export default function PenkMarket() {
   const [usdValue, setUsdValue] = useState<number>(0);
   const [equivalentAmount, setEquivalentAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [penkBonus, setPenkBonus] = useState<number>(0);
+  const [totalUsdValue, setTotalUsdValue] = useState<number>(0);
 
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -75,6 +77,8 @@ export default function PenkMarket() {
     setFromAmount('');
     setUsdValue(0);
     setEquivalentAmount('');
+    setPenkBonus(0);
+    setTotalUsdValue(0);
   };
 
   const handleToTokenSelect = (token: string) => {
@@ -82,6 +86,8 @@ export default function PenkMarket() {
     setToDropdownOpen(false);
     // Reset equivalent amount when changing target token
     setEquivalentAmount('');
+    setPenkBonus(0);
+    setTotalUsdValue(0);
   };
 
   const toggleFromDropdown = () => {
@@ -153,10 +159,16 @@ export default function PenkMarket() {
         // Update the TO field with the quote result
         const tokensReceived = data.data.tokensReceived;
         const inputUsdValue = data.data.inputUsdValue;
+        const penkBonusAmount = data.data.penkBonus;
+        const totalUsdValueAmount = data.data.totalUsdValue;
         console.log('Setting equivalent amount to:', tokensReceived);
         console.log('Setting USD value to:', inputUsdValue);
+        console.log('Setting PenkBonus to:', penkBonusAmount);
+        console.log('Setting total USD value to:', totalUsdValueAmount);
         setEquivalentAmount(tokensReceived.toString());
         setUsdValue(inputUsdValue);
+        setPenkBonus(penkBonusAmount);
+        setTotalUsdValue(totalUsdValueAmount);
       } else {
         console.error('Quote API error:', data.error);
         // Just update with 0 if there's an error
@@ -405,44 +417,64 @@ export default function PenkMarket() {
             <div className="mb-6">
               <div className="text-sm text-gray-400 mb-2">To</div>
               <div className="bg-black border border-gray-700 rounded-lg p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                                  <div className="text-xl sm:text-2xl text-white">
-                  {isLoading ? 'Calculating...' : (equivalentAmount ? equivalentAmount : '0.0')}
-                </div>
-                {equivalentAmount && !isLoading && (
-                  <div className="text-xs text-gray-500">
-                    ≈ ${usdValue.toFixed(2)}
+                <div className="flex flex-col gap-3">
+                  {/* Token Selection */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xl sm:text-2xl text-white">
+                      {isLoading ? 'Calculating...' : (equivalentAmount ? equivalentAmount : '0.0')}
+                    </div>
+                    <div className="relative">
+                      <button 
+                        onClick={toggleToDropdown}
+                        disabled={!isConnected}
+                        className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition-colors bg-[#0a0a0a] border-gray-600 hover:border-yellow-400"
+                      >
+                        <span className="text-white font-medium">
+                          {toToken}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      {toDropdownOpen && isConnected && (
+                        <div className="absolute top-full right-0 mt-2 bg-[#0a0a0a] border-2 border-yellow-400 rounded-lg shadow-xl z-50 min-w-[120px]">
+                          {toTokens.map((token) => (
+                            <button
+                              key={token}
+                              onClick={() => handleToTokenSelect(token)}
+                              className={`w-full text-left px-3 py-2 hover:bg-[#111111] transition-colors ${
+                                toToken === token ? 'text-yellow-400 bg-[#111111]' : 'text-white'
+                              }`}
+                            >
+                              {token}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-                <div className="relative">
-                    <button 
-                      onClick={toggleToDropdown}
-                      disabled={!isConnected}
-                      className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-3 py-2 rounded-lg border transition-colors bg-[#0a0a0a] border-gray-600 hover:border-yellow-400"
-                    >
-                      <span className="text-white font-medium">
-                        {toToken}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                    
-                    {/* Dropdown Menu */}
-                    {toDropdownOpen && isConnected && (
-                      <div className="absolute top-full left-0 mt-2 bg-[#0a0a0a] border-2 border-yellow-400 rounded-lg shadow-xl z-50 min-w-[120px] w-full sm:w-auto">
-                        {toTokens.map((token) => (
-                          <button
-                            key={token}
-                            onClick={() => handleToTokenSelect(token)}
-                            className={`w-full text-left px-3 py-2 hover:bg-[#111111] transition-colors ${
-                              toToken === token ? 'text-yellow-400 bg-[#111111]' : 'text-white'
-                            }`}
-                          >
-                            {token}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  
+                                     {/* Quote Details */}
+                   {equivalentAmount && !isLoading && (
+                     <div className="bg-[#0a0a0a] border border-gray-600 rounded-lg p-3 space-y-2">
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-400">You Pay:</span>
+                         <span className="text-white">{fromAmount} {fromToken}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-400">You Receive:</span>
+                         <span className="text-white">{equivalentAmount} {toToken}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-400">PenkBonus:</span>
+                         <span className="text-yellow-400">+${penkBonus.toFixed(2)} (2%)</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-400">Total Value:</span>
+                         <span className="text-white">≈ ${totalUsdValue.toFixed(2)}</span>
+                       </div>
+                     </div>
+                   )}
                 </div>
               </div>
             </div>

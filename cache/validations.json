@@ -1,0 +1,538 @@
+{
+  "version": "3.4",
+  "log": [
+    {
+      "@openzeppelin/contracts/access/Ownable.sol:Ownable": {
+        "src": "@openzeppelin\\contracts\\access\\Ownable.sol:20",
+        "inherit": [
+          "@openzeppelin/contracts/utils/Context.sol:Context"
+        ],
+        "libraries": [],
+        "methods": [
+          "owner()",
+          "renounceOwnership()",
+          "transferOwnership(address)"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "Ownable",
+            "src": "@openzeppelin\\contracts\\access\\Ownable.sol:38"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20": {
+        "src": "@openzeppelin\\contracts\\token\\ERC20\\IERC20.sol:9",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "totalSupply()",
+          "balanceOf(address)",
+          "transfer(address,uint256)",
+          "allowance(address,address)",
+          "approve(address,uint256)",
+          "transferFrom(address,address,uint256)"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "@openzeppelin/contracts/utils/Context.sol:Context": {
+        "src": "@openzeppelin\\contracts\\utils\\Context.sol:16",
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "@openzeppelin/contracts/utils/Pausable.sol:Pausable": {
+        "src": "@openzeppelin\\contracts\\utils\\Pausable.sol:17",
+        "inherit": [
+          "@openzeppelin/contracts/utils/Context.sol:Context"
+        ],
+        "libraries": [],
+        "methods": [
+          "paused()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [
+            {
+              "label": "_paused",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_bool",
+              "contract": "Pausable",
+              "src": "@openzeppelin\\contracts\\utils\\Pausable.sol:18"
+            }
+          ],
+          "types": {
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "@openzeppelin/contracts/utils/ReentrancyGuard.sol:ReentrancyGuard": {
+        "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:25",
+        "inherit": [],
+        "libraries": [],
+        "methods": [],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "ReentrancyGuard",
+            "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:47"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_status",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:40"
+            }
+          ],
+          "types": {
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "contracts/L1.sol:PenkMarketL1": {
+        "src": "contracts\\L1.sol:9",
+        "version": {
+          "withMetadata": "eaa75386be36d2de2e54fa2e135dae680008da65063214da0bd4d6c0a5930152",
+          "withoutMetadata": "1168f850076e1bc20ec2c1cbf8edd90c90291de7683b4e73e8234e8448896150",
+          "linkedWithoutMetadata": "1168f850076e1bc20ec2c1cbf8edd90c90291de7683b4e73e8234e8448896150"
+        },
+        "inherit": [
+          "@openzeppelin/contracts/utils/Pausable.sol:Pausable",
+          "@openzeppelin/contracts/access/Ownable.sol:Ownable",
+          "@openzeppelin/contracts/utils/Context.sol:Context",
+          "@openzeppelin/contracts/utils/ReentrancyGuard.sol:ReentrancyGuard"
+        ],
+        "libraries": [],
+        "methods": [
+          "(address,address,address)",
+          "buy(string)",
+          "buyWithUSDC(string,uint256)",
+          "buyWithPEPU(string,uint256)",
+          "completeTransaction(string)",
+          "refundTransaction(string)",
+          "getTransaction(string)",
+          "getUserTransactions(address)",
+          "pause()",
+          "unpause()",
+          "setPenkBonus(uint256)",
+          "withdrawETH()",
+          "withdrawToken(address)",
+          "()"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "PenkMarketL1",
+            "src": "contracts\\L1.sol:73"
+          },
+          {
+            "kind": "state-variable-immutable",
+            "name": "USDC_ADDRESS",
+            "src": "contracts\\L1.sol:12"
+          },
+          {
+            "kind": "state-variable-immutable",
+            "name": "PEPU_ADDRESS",
+            "src": "contracts\\L1.sol:13"
+          },
+          {
+            "kind": "state-variable-immutable",
+            "name": "VERIFIER_ADDRESS",
+            "src": "contracts\\L1.sol:14"
+          },
+          {
+            "kind": "state-variable-assignment",
+            "name": "penkBonusBasisPoints",
+            "src": "contracts\\L1.sol:36"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_status",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:40"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
+            },
+            {
+              "label": "_paused",
+              "offset": 20,
+              "slot": "1",
+              "type": "t_bool",
+              "contract": "Pausable",
+              "src": "@openzeppelin\\contracts\\utils\\Pausable.sol:18"
+            },
+            {
+              "label": "transactionNonce",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_uint256",
+              "contract": "PenkMarketL1",
+              "src": "contracts\\L1.sol:30"
+            },
+            {
+              "label": "transactions",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_mapping(t_string_memory_ptr,t_struct(Transaction)468_storage)",
+              "contract": "PenkMarketL1",
+              "src": "contracts\\L1.sol:31"
+            },
+            {
+              "label": "txidExists",
+              "offset": 0,
+              "slot": "4",
+              "type": "t_mapping(t_string_memory_ptr,t_bool)",
+              "contract": "PenkMarketL1",
+              "src": "contracts\\L1.sol:32"
+            },
+            {
+              "label": "userTransactions",
+              "offset": 0,
+              "slot": "5",
+              "type": "t_mapping(t_address,t_array(t_string_storage)dyn_storage)",
+              "contract": "PenkMarketL1",
+              "src": "contracts\\L1.sol:33"
+            },
+            {
+              "label": "penkBonusBasisPoints",
+              "offset": 0,
+              "slot": "6",
+              "type": "t_uint256",
+              "contract": "PenkMarketL1",
+              "src": "contracts\\L1.sol:36"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_string_storage)dyn_storage": {
+              "label": "string[]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_enum(TransactionStatus)454": {
+              "label": "enum PenkMarketL1.TransactionStatus",
+              "members": [
+                "PENDING",
+                "COMPLETED",
+                "REFUNDED"
+              ],
+              "numberOfBytes": "1"
+            },
+            "t_mapping(t_address,t_array(t_string_storage)dyn_storage)": {
+              "label": "mapping(address => string[])",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_string_memory_ptr,t_bool)": {
+              "label": "mapping(string => bool)",
+              "numberOfBytes": "32"
+            },
+            "t_mapping(t_string_memory_ptr,t_struct(Transaction)468_storage)": {
+              "label": "mapping(string => struct PenkMarketL1.Transaction)",
+              "numberOfBytes": "32"
+            },
+            "t_string_memory_ptr": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_string_storage": {
+              "label": "string",
+              "numberOfBytes": "32"
+            },
+            "t_struct(Transaction)468_storage": {
+              "label": "struct PenkMarketL1.Transaction",
+              "members": [
+                {
+                  "label": "user",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "0"
+                },
+                {
+                  "label": "tokenAddress",
+                  "type": "t_address",
+                  "offset": 0,
+                  "slot": "1"
+                },
+                {
+                  "label": "amount",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "2"
+                },
+                {
+                  "label": "timestamp",
+                  "type": "t_uint256",
+                  "offset": 0,
+                  "slot": "3"
+                },
+                {
+                  "label": "status",
+                  "type": "t_enum(TransactionStatus)454",
+                  "offset": 0,
+                  "slot": "4"
+                },
+                {
+                  "label": "tokenType",
+                  "type": "t_string_storage",
+                  "offset": 0,
+                  "slot": "5"
+                }
+              ],
+              "numberOfBytes": "192"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "contracts/L2.sol:IQuoterV2": {
+        "src": "contracts\\L2.sol:10",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "quoteExactInputSingle((address,address,uint256,uint24,uint160))"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "contracts/L2.sol:IV3SwapRouter": {
+        "src": "contracts\\L2.sol:30",
+        "inherit": [],
+        "libraries": [],
+        "methods": [
+          "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))",
+          "multicall(uint256,bytes[])",
+          "refundETH()"
+        ],
+        "linkReferences": [],
+        "errors": [],
+        "layout": {
+          "storage": [],
+          "types": {},
+          "layoutVersion": "1.2",
+          "flat": false,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      },
+      "contracts/L2.sol:PenkMarketL2": {
+        "src": "contracts\\L2.sol:54",
+        "version": {
+          "withMetadata": "e15df418a2aa60f977d791cb94ad8e33cd138846db4ef9006d817b6fadf97811",
+          "withoutMetadata": "8edf0fc60d41e10a16f0fbe4b2bd366040067db3f65971249170c9c5d9257c78",
+          "linkedWithoutMetadata": "8edf0fc60d41e10a16f0fbe4b2bd366040067db3f65971249170c9c5d9257c78"
+        },
+        "inherit": [
+          "@openzeppelin/contracts/utils/Pausable.sol:Pausable",
+          "@openzeppelin/contracts/access/Ownable.sol:Ownable",
+          "@openzeppelin/contracts/utils/Context.sol:Context",
+          "@openzeppelin/contracts/utils/ReentrancyGuard.sol:ReentrancyGuard"
+        ],
+        "libraries": [],
+        "methods": [
+          "(address)",
+          "deposit()",
+          "withdraw(uint256)",
+          "swap(uint256,address,address)",
+          "getQuote(uint256,address)",
+          "getContractBalance()",
+          "updateSlippage(uint256)",
+          "emergencyPause()",
+          "emergencyUnpause()",
+          "emergencyWithdrawAll()",
+          "()",
+          "()"
+        ],
+        "linkReferences": [],
+        "errors": [
+          {
+            "kind": "constructor",
+            "contract": "PenkMarketL2",
+            "src": "contracts\\L2.sol:84"
+          },
+          {
+            "kind": "state-variable-immutable",
+            "name": "VERIFIER_ADDRESS",
+            "src": "contracts\\L2.sol:62"
+          },
+          {
+            "kind": "state-variable-assignment",
+            "name": "feeTiers",
+            "src": "contracts\\L2.sol:65"
+          },
+          {
+            "kind": "state-variable-assignment",
+            "name": "slippageBasisPoints",
+            "src": "contracts\\L2.sol:68"
+          }
+        ],
+        "layout": {
+          "storage": [
+            {
+              "label": "_status",
+              "offset": 0,
+              "slot": "0",
+              "type": "t_uint256",
+              "contract": "ReentrancyGuard",
+              "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:40"
+            },
+            {
+              "label": "_owner",
+              "offset": 0,
+              "slot": "1",
+              "type": "t_address",
+              "contract": "Ownable",
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
+            },
+            {
+              "label": "_paused",
+              "offset": 20,
+              "slot": "1",
+              "type": "t_bool",
+              "contract": "Pausable",
+              "src": "@openzeppelin\\contracts\\utils\\Pausable.sol:18"
+            },
+            {
+              "label": "feeTiers",
+              "offset": 0,
+              "slot": "2",
+              "type": "t_array(t_uint24)3_storage",
+              "contract": "PenkMarketL2",
+              "src": "contracts\\L2.sol:65"
+            },
+            {
+              "label": "slippageBasisPoints",
+              "offset": 0,
+              "slot": "3",
+              "type": "t_uint256",
+              "contract": "PenkMarketL2",
+              "src": "contracts\\L2.sol:68"
+            }
+          ],
+          "types": {
+            "t_address": {
+              "label": "address",
+              "numberOfBytes": "20"
+            },
+            "t_array(t_uint24)3_storage": {
+              "label": "uint24[3]",
+              "numberOfBytes": "32"
+            },
+            "t_bool": {
+              "label": "bool",
+              "numberOfBytes": "1"
+            },
+            "t_uint24": {
+              "label": "uint24",
+              "numberOfBytes": "3"
+            },
+            "t_uint256": {
+              "label": "uint256",
+              "numberOfBytes": "32"
+            }
+          },
+          "layoutVersion": "1.2",
+          "flat": true,
+          "namespaces": {}
+        },
+        "solcVersion": "0.8.22"
+      }
+    }
+  ]
+}

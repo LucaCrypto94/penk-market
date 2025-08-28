@@ -107,8 +107,16 @@ export async function POST(request: Request) {
 
     console.log(`Input USD value: $${inputUsdValue}`);
 
-    // Calculate how many target tokens will be received
-    const tokensReceived = inputUsdValue / toTokenPrice;
+    // Apply 2% PenkBonus (same as L1 contract)
+    const penkBonusBasisPoints = 200; // 2% = 200 basis points
+    const penkBonus = (inputUsdValue * penkBonusBasisPoints) / 10000;
+    const totalUsdValue = inputUsdValue + penkBonus;
+
+    console.log(`PenkBonus: $${penkBonus.toFixed(2)} (2%)`);
+    console.log(`Total USD value with bonus: $${totalUsdValue.toFixed(2)}`);
+
+    // Calculate how many target tokens will be received (including bonus)
+    const tokensReceived = totalUsdValue / toTokenPrice;
     
     console.log(`Tokens received: ${tokensReceived} ${toToken}`);
 
@@ -118,7 +126,10 @@ export async function POST(request: Request) {
         tokensReceived: parseFloat(tokensReceived.toFixed(6)),
         fromTokenPrice,
         toTokenPrice,
-        inputUsdValue: parseFloat(inputUsdValue.toFixed(2))
+        inputUsdValue: parseFloat(inputUsdValue.toFixed(2)),
+        penkBonus: parseFloat(penkBonus.toFixed(2)),
+        totalUsdValue: parseFloat(totalUsdValue.toFixed(2)),
+        penkBonusPercentage: "2%"
       }
     });
 
