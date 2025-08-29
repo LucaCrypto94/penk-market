@@ -35,9 +35,10 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
     // PenkBonus system - default 2% (200 basis points)
     uint256 public penkBonusBasisPoints = 200; // 2% = 200 basis points
     
-    // Events
+    // Events - FIXED: Added non-indexed txid parameter for reading the actual value
     event TransactionCreated(
-        string indexed txid,
+        string indexed txidIndexed,  // For filtering
+        string txid,                 // For reading the actual value
         address indexed user,
         string providedString,
         uint256 amount,
@@ -48,14 +49,16 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
     );
     
     event TransactionCompleted(
-        string indexed txid,
+        string indexed txidIndexed,  // For filtering
+        string txid,                 // For reading the actual value
         address indexed user,
         uint256 amount,
         string tokenType
     );
     
     event TransactionRefunded(
-        string indexed txid,
+        string indexed txidIndexed,  // For filtering
+        string txid,                 // For reading the actual value
         address indexed user,
         uint256 amount,
         string tokenType
@@ -111,7 +114,9 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
         
         uint256 penkBonus = (msg.value * penkBonusBasisPoints) / 10000;
         uint256 totalAmount = msg.value + penkBonus;
-        emit TransactionCreated(txid, msg.sender, providedString, msg.value, penkBonus, totalAmount, "ETH", block.timestamp);
+        
+        // FIXED: Emit txid both indexed and non-indexed
+        emit TransactionCreated(txid, txid, msg.sender, providedString, msg.value, penkBonus, totalAmount, "ETH", block.timestamp);
     }
     
     // Buy with USDC
@@ -143,7 +148,9 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
         
         uint256 penkBonus = (amount * penkBonusBasisPoints) / 10000;
         uint256 totalAmount = amount + penkBonus;
-        emit TransactionCreated(txid, msg.sender, providedString, amount, penkBonus, totalAmount, "USDC", block.timestamp);
+        
+        // FIXED: Emit txid both indexed and non-indexed
+        emit TransactionCreated(txid, txid, msg.sender, providedString, amount, penkBonus, totalAmount, "USDC", block.timestamp);
     }
     
     // Buy with PEPU
@@ -175,7 +182,9 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
         
         uint256 penkBonus = (amount * penkBonusBasisPoints) / 10000;
         uint256 totalAmount = amount + penkBonus;
-        emit TransactionCreated(txid, msg.sender, providedString, amount, penkBonus, totalAmount, "PEPU", block.timestamp);
+        
+        // FIXED: Emit txid both indexed and non-indexed
+        emit TransactionCreated(txid, txid, msg.sender, providedString, amount, penkBonus, totalAmount, "PEPU", block.timestamp);
     }
     
     // Complete transaction (only verifier can call)
@@ -195,7 +204,8 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
             IERC20(transaction.tokenAddress).transfer(owner(), transaction.amount);
         }
         
-        emit TransactionCompleted(txid, transaction.user, transaction.amount, transaction.tokenType);
+        // FIXED: Emit txid both indexed and non-indexed
+        emit TransactionCompleted(txid, txid, transaction.user, transaction.amount, transaction.tokenType);
     }
     
     // Refund transaction (only verifier can call)
@@ -212,7 +222,8 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
             IERC20(transaction.tokenAddress).transfer(transaction.user, transaction.amount);
         }
         
-        emit TransactionRefunded(txid, transaction.user, transaction.amount, transaction.tokenType);
+        // FIXED: Emit txid both indexed and non-indexed
+        emit TransactionRefunded(txid, txid, transaction.user, transaction.amount, transaction.tokenType);
     }
     
     // Get transaction details
@@ -287,4 +298,4 @@ contract PenkMarketL1 is ReentrancyGuard, Ownable, Pausable {
     
     // Receive function for ETH
     receive() external payable {}
-} 
+}

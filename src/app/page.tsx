@@ -5,6 +5,7 @@ import { ChevronDown, ArrowUpDown, Wallet, Menu, X } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useBalance, useDisconnect, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther, parseUnits, formatEther, formatUnits } from 'viem';
+import { getToTokenAddress } from '@/lib/token-utils';
 
 export default function PenkMarket() {
   const [fromAmount, setFromAmount] = useState('');
@@ -213,6 +214,11 @@ export default function PenkMarket() {
     }
   };
 
+  // Gas estimation helper function
+  const estimateGas = (baseGas: number, multiplier: number = 1.2) => {
+    return Math.ceil(baseGas * multiplier);
+  };
+
   const executeTransaction = async () => {
     if (!fromAmount || parseFloat(fromAmount) <= 0 || !equivalentAmount) return;
     
@@ -221,7 +227,29 @@ export default function PenkMarket() {
     
     try {
       const amount = parseFloat(fromAmount);
-      const providedString = `Buying ${toToken} with ${fromToken}`;
+      
+      // Get the actual contract address for the TO token using the utility function
+      const toTokenAddress = getToTokenAddress(toToken);
+      if (!toTokenAddress) {
+        throw new Error(`Could not get address for TO token: ${toToken}`);
+      }
+      
+      // The providedString should be the TO token address, not a descriptive string
+      const providedString = toTokenAddress;
+      
+      // Debug logging to see what's actually being sent
+      console.log('=== DEBUG INFO ===');
+      console.log('Selected TO token:', toToken);
+      console.log('TO token address:', toTokenAddress);
+      console.log('Final providedString:', providedString);
+      console.log('==================');
+      
+      // Dynamic gas limit configurations with safety margins
+      const gasLimits = {
+        ETH: estimateGas(500000, 2.0),      // ETH transactions with 100% safety margin
+        USDC: estimateGas(600000, 2.5),     // ERC20 approval + contract call with 150% safety margin
+        PEPU: estimateGas(600000, 2.5)      // ERC20 approval + contract call with 150% safety margin
+      };
       
       if (fromToken === 'ETH') {
         // Buy with ETH
@@ -239,7 +267,8 @@ export default function PenkMarket() {
           ],
           functionName: 'buy',
           args: [providedString],
-          value: parseEther(fromAmount)
+          value: parseEther(fromAmount),
+          gas: BigInt(gasLimits.ETH)
         });
         setTxStatus('ETH transaction submitted!');
         
@@ -261,7 +290,8 @@ export default function PenkMarket() {
             }
           ],
           functionName: 'approve',
-          args: [L1_CONTRACT_ADDRESS, parseUnits(fromAmount, 6)]
+          args: [L1_CONTRACT_ADDRESS, parseUnits(fromAmount, 6)],
+          gas: BigInt(estimateGas(200000, 2.0)) // ERC20 approval with 100% safety margin
         });
         
         setTxStatus('USDC approved, executing transaction...');
@@ -280,7 +310,8 @@ export default function PenkMarket() {
             }
           ],
           functionName: 'buyWithUSDC',
-          args: [providedString, parseUnits(fromAmount, 6)]
+          args: [providedString, parseUnits(fromAmount, 6)],
+          gas: BigInt(gasLimits.USDC)
         });
         setTxStatus('USDC transaction submitted!');
         
@@ -302,7 +333,8 @@ export default function PenkMarket() {
             }
           ],
           functionName: 'approve',
-          args: [L1_CONTRACT_ADDRESS, parseUnits(fromAmount, 18)]
+          args: [L1_CONTRACT_ADDRESS, parseUnits(fromAmount, 18)],
+          gas: BigInt(estimateGas(200000, 2.0)) // ERC20 approval with 100% safety margin
         });
         
         setTxStatus('PEPU approved, executing transaction...');
@@ -314,14 +346,15 @@ export default function PenkMarket() {
                 {"internalType": "string", "name": "providedString", "type": "string"},
                 {"internalType": "uint256", "name": "amount", "type": "uint256"}
               ],
-              "name": "buyWithPEPU",
+              "name": 'buyWithPEPU',
               "outputs": [],
               "stateMutability": "nonpayable",
               "type": "function"
             }
           ],
           functionName: 'buyWithPEPU',
-          args: [providedString, parseUnits(fromAmount, 18)]
+          args: [providedString, parseUnits(fromAmount, 18)],
+          gas: BigInt(gasLimits.PEPU)
         });
         setTxStatus('PEPU transaction submitted!');
       }
@@ -570,38 +603,38 @@ export default function PenkMarket() {
                 <div className="flex flex-col gap-3">
                   {/* Token Selection */}
                   <div className="flex items-center justify-between">
-                    <div className="text-xl sm:text-2xl text-white">
+                  <div className="text-xl sm:text-2xl text-white">
                       {isLoading ? 'Calculating...' : (equivalentAmount ? equivalentAmount : '0.0')}
-                    </div>
-                    <div className="relative">
-                      <button 
-                        onClick={toggleToDropdown}
-                        disabled={!isConnected}
+                  </div>
+                  <div className="relative">
+                    <button 
+                      onClick={toggleToDropdown}
+                      disabled={!isConnected}
                         className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition-colors bg-[#0a0a0a] border-gray-600 hover:border-yellow-400"
-                      >
-                        <span className="text-white font-medium">
-                          {toToken}
-                        </span>
-                        <ChevronDown className="w-4 h-4 text-gray-400" />
-                      </button>
-                      
-                      {/* Dropdown Menu */}
-                      {toDropdownOpen && isConnected && (
+                    >
+                      <span className="text-white font-medium">
+                        {toToken}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {toDropdownOpen && isConnected && (
                         <div className="absolute top-full right-0 mt-2 bg-[#0a0a0a] border-2 border-yellow-400 rounded-lg shadow-xl z-50 min-w-[120px]">
-                          {toTokens.map((token) => (
-                            <button
-                              key={token}
-                              onClick={() => handleToTokenSelect(token)}
-                              className={`w-full text-left px-3 py-2 hover:bg-[#111111] transition-colors ${
-                                toToken === token ? 'text-yellow-400 bg-[#111111]' : 'text-white'
-                              }`}
-                            >
-                              {token}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                        {toTokens.map((token) => (
+                          <button
+                            key={token}
+                            onClick={() => handleToTokenSelect(token)}
+                            className={`w-full text-left px-3 py-2 hover:bg-[#111111] transition-colors ${
+                              toToken === token ? 'text-yellow-400 bg-[#111111]' : 'text-white'
+                            }`}
+                          >
+                            {token}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   </div>
                   
                                                          {/* Quote Details */}

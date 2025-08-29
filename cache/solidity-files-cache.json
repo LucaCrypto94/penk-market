@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\User\\penk-market\\contracts\\L1.sol": {
-      "lastModificationDate": 1756384205004,
-      "contentHash": "3031f565ea7ad497bcd0183c08b45371",
+      "lastModificationDate": 1756418318002,
+      "contentHash": "f7e0759f5dfe9e491f66eecf83ea7798",
       "sourceName": "contracts/L1.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -233,8 +233,8 @@
       ]
     },
     "C:\\Users\\User\\penk-market\\contracts\\L2.sol": {
-      "lastModificationDate": 1756383769663,
-      "contentHash": "0d7e6c69b767e79f2e77e7ac3e58cc16",
+      "lastModificationDate": 1756455275132,
+      "contentHash": "f430dd2c72ce576e22c843c93a5db08c",
       "sourceName": "contracts/L2.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -271,8 +271,6 @@
         "^0.8.19"
       ],
       "artifacts": [
-        "IQuoterV2",
-        "IV3SwapRouter",
         "PenkMarketL2"
       ]
     }
